@@ -9,7 +9,7 @@ void display()
     glLoadIdentity();
 
     drawRoad(); // Llama la función que dibuja las calles
-
+    drawBus(650, 275);//llama la funcion para dib. el bus 
     glutSwapBuffers();
 }
 
@@ -27,12 +27,12 @@ void idle()
     glutPostRedisplay(); // Redibuja continuamente
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **argv)                                  
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(800, 600);
-    glutCreateWindow("Juego 2D ");
+    glutCreateWindow("Juego 2D ");                  
 
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
