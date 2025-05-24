@@ -17,4 +17,7 @@ void drawSign();
 void drawForest();
 void drawMountain();
 
+// Función del bus
+void drawBus(int x, int y);
+
 #endif

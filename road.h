@@ -9,6 +9,7 @@ extern int frameCount;
 
 // Funciones de carretera
 void drawRoad();
+void drawBus(float x, float y);
 void drawRoadPoints();
 void drawLaneLines(float y);
 void drawSign();
