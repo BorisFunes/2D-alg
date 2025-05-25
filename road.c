@@ -177,7 +177,7 @@ void drawSign()
             for (int i = 0; i < 8; i++)
                 glVertex2f(textX + i, 530);
             for (int i = 0; i < 5; i++)
-                glVertex2f(textX + 7, 531 + i);
+                glVertex2f(textX + 8, 531 + i);
             for (int i = 0; i < 5; i++)
                 glVertex2f(textX + 3 + i, 526 + i);
             textX += 18;

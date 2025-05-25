@@ -5,18 +5,23 @@
 void drawForest()
 {
     // Bosque en la parte inferior (estilo Stardew Valley)
+// Capa trasera (más oscura)
+
+
+
 
     // Troncos de árboles usando líneas
     glLineWidth(8.0f);
     for (float x = 50; x < 1000; x += 80)
     {
-        glBegin(GL_LINES);
+       
+        glBegin(GL_LINES);  
         glColor3f(0.4f, 0.2f, 0.1f); // Café oscuro para troncos
         glVertex2f(x + landscapeOffset, 50);
         glVertex2f(x + landscapeOffset, 120);
         glEnd();
     }
-
+ 
     // Copa de árboles usando puntos grandes
     glPointSize(12.0f);
     glBegin(GL_POINTS);
@@ -71,6 +76,8 @@ void drawForest()
         glVertex2f(x + landscapeOffset + 40, 28);
     }
     glEnd();
+    // se restablecen el grosor de linea  
+    glLineWidth(3.0f);  
 }
 
 void drawMountain()
@@ -163,4 +170,5 @@ void drawMountain()
         glVertex2f(x + landscapeOffset + 4, rockY + 2);
     }
     glEnd();
+    
 }
