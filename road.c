@@ -2,12 +2,6 @@
 #include <math.h>
 #include "header.h"
 
-// Definición de variables globales
-float offset = 0.0f;
-float pointOffset = 0.0f;
-float landscapeOffset = 0.0f;
-int frameCount = 0;
-
 void drawLaneLines(float y)
 {
     for (float x = 0; x < 800; x += 40)

@@ -1,7 +1,9 @@
 #include <GL/glut.h>
 #include "header.h"
+#include <stdio.h>
 
-// funcion para mostrar texto
+// Función para dibujar texto simple usando puntos (bitmap text no disponible en todas las configuraciones)
+// Función para mostrar texto
 void drawText(float x, float y, const char *text)
 {
     glRasterPos2f(x, y);
@@ -10,82 +12,85 @@ void drawText(float x, float y, const char *text)
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, text[i]);
     }
 }
-
-// menu
+// Función para dibujar el menú principal
+// Función para dibujar el menú principal
 void drawMenu()
 {
+    // Fondo del menú
     glClearColor(0.2f, 0.3f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // marco
+    // Marco decorativo del menú
     glColor3f(0.8f, 0.8f, 0.9f);
-    glLineWidth(2.0f);
+    glLineWidth(3.0f);
     glBegin(GL_LINE_LOOP);
-    glVertex2f(180, 250);
-    glVertex2f(620, 250);
-    glVertex2f(620, 480);
-    glVertex2f(180, 480);
+    glVertex2f(150, 200);
+    glVertex2f(650, 200);
+    glVertex2f(650, 500);
+    glVertex2f(150, 500);
     glEnd();
     glLineWidth(1.0f);
 
+    // Título principal
     glColor3f(1.0f, 0.9f, 0.7f);
-    drawText(240, 450, "SELECCIONA TU VEHICULO");
+    drawText(220, 460, "JUEGO DE VEHICULOS 2D");
 
     glColor3f(0.9f, 0.9f, 1.0f);
-    drawText(200, 410, "1. Moto de Delivery");
-    drawText(200, 380, "2. Kia Soul");
-    drawText(200, 350, "3. Microbus Coaster");
-    drawText(200, 320, "4. Bus");
-    glColor3f(1.0f, 0.7f, 0.7f);
-    drawText(200, 290, "5. Salir del juego");
-    glColor3f(0.8f, 0.8f, 0.8f);
-    drawText(220, 260, "Presiona 1, 2, 3, 4 o 5");
+    drawText(250, 430, "SELECCIONA TU VEHICULO");
 
-    glutSwapBuffers();
+    // Opciones del menú
+    glColor3f(0.9f, 0.9f, 1.0f);
+    drawText(200, 380, "1. Moto de Delivery");
+    drawText(200, 350, "2. Kia Soul (Carro)");
+    drawText(200, 320, "3. Microbus Coaster");
+    drawText(200, 290, "4. Bus Urbano");
+
+    // Opción de salir en color diferente
+    glColor3f(1.0f, 0.7f, 0.7f);
+    drawText(200, 250, "5. Salir del juego");
+
+    // Instrucciones
+    glColor3f(0.8f, 0.8f, 0.8f);
+    drawText(220, 210, "Presiona 1, 2, 3, 4 o 5");
+
+    // No necesitas glutSwapBuffers() aquí porque se maneja en display()
 }
 
+// Función para dibujar el juego completo
 void drawGame()
 {
+    // NO limpiar aquí - ya se limpia en display()
 
-    glClearColor(0.7f, 0.9f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    drawRoad(); // Llama la función que dibuja las calles
-    // dibuja segun la seleccion
-    switch (selectedVehicle)
+    // Dibujar carretera (que incluye paisaje de fondo)
+    drawRoad();
+
+    // NO llamar glutSwapBuffers() aquí - se hace en display()
+}
+
+// Función para mostrar información del juego
+void drawGameInfo()
+{
+    Vehicle *playerVehicle = getVehicle(0);
+    if (playerVehicle != NULL)
     {
-    case 1:
-        drawDelivery(680, 250);
-        break;
-    case 2:
-        drawCar(680, 250);
-        break;
-    case 3:
-        drawCoaster(680, 250);
-        break;
-    case 4:
-        drawBus(600, 250);
-        break;
-    }
+        // Información del vehículo del jugador
+        glColor3f(1.0f, 1.0f, 1.0f);
 
-    // muestra el vehiculo seleccionado
-    glColor3f(1.0f, 1.0f, 1.0f);
-    switch (selectedVehicle)
-    {
-    case 1:
-        drawText(20, 570, "Vehiculo: Moto de Delivery");
-        break;
-    case 2:
-        drawText(20, 570, "Vehiculo: Kia Soul");
-        break;
-    case 3:
-        drawText(20, 570, "Vehiculo: Microbus Coaster");
-        break;
-    case 4:
-        drawText(20, 570, "Vehiculo: Bus");
-        break;
-    }
-    glColor3f(0.2f, 0.2f, 0.2f);
-    drawText(20, 5, "Presiona 'M' para volver al menu");
+        char info[100];
+        sprintf(info, "Velocidad: %.1f", playerVehicle->speed);
+        drawText(10, 580, info);
 
-    glutSwapBuffers();
+        sprintf(info, "Carril: %d", playerVehicle->currentLane + 1);
+        drawText(10, 560, info);
+
+        sprintf(info, "Pos: (%.0f, %.0f)", playerVehicle->x, playerVehicle->y);
+        drawText(10, 540, info);
+
+        // Controles
+        glColor3f(0.8f, 0.8f, 0.8f);
+        drawText(10, 50, "WASD o Flechas: Mover");
+        drawText(10, 30, "M: Menu  R: Reiniciar");
+        drawText(10, 10, "P: Pausa");
+        drawText(90, 10, "ESPACIO: Saltar");
+    }
 }
