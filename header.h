@@ -13,6 +13,7 @@ extern int frameCount;
 extern int selectedVehicle;
 extern bool enMenu;
 extern bool gamePaused; // Nueva variable para control de pausa
+extern bool gameOver;
 
 // Estructura del vehículo
 typedef struct
@@ -24,6 +25,16 @@ typedef struct
     int currentLane;     // Carril actual (0=inferior, 1=superior)
     float speed;         // Velocidad individual del vehículo
 } Vehicle;
+
+// ========== ESTRUCTURA DE OBSTÁCULOS (NUEVO) ==========
+typedef struct
+{
+    float x, y;      // Posición del obstáculo
+    int size;        // Tamaño del obstáculo
+    int type;        // Tipo de piedra (0, 1, 2)
+    int lane;        // Carril donde está (0=inferior, 1=superior)
+    bool active;     // Si el obstáculo está activo
+} Obstacle;
 
 // Funciones de menú y juego
 void drawMenu();
@@ -84,12 +95,35 @@ void renderVehicles();
 
 // Funciones de utilidad
 bool isWithinRoadBounds(float x, float y);
-bool checkCollision(int vehicleIndex, float newX, float newY);
+bool checkCollision(int index, float newX, float newY);
 float getLaneCenterY(int lane);
 
 // Funciones de información
 Vehicle *getVehicle(int index);
 int getVehicleCount();
+
+// ========== FUNCIONES DE OBSTÁCULOS (obstacles.c) - NUEVO ==========
+// Funciones de inicialización
+void initObstacles();
+void clearObstacles();
+
+// Funciones de spawn y manejo
+void spawnObstacle(float x, int lane, int type);
+void updateObstacles();
+
+// Funciones de renderizado
+void renderObstacles();
+void drawRockType1(float x, float y, float size);
+void drawRockType2(float x, float y, float size);
+void drawRockType3(float x, float y, float size);
+
+// Funciones de colisión
+bool checkObstacleCollision(float vehicleX, float vehicleY, float vehicleWidth, float vehicleHeight);
+
+// Funciones de información y configuración
+int getActiveObstacleCount();
+Obstacle* getObstacle(int index);
+void setObstacleDifficulty(int difficulty);
 
 // Constantes para el sistema de movimiento
 #define ROAD_BOTTOM 200
@@ -105,5 +139,13 @@ int getVehicleCount();
 #define SPAWN_RIGHT_X 700  // Posición X para spawn en la derecha (si se necesita)
 #define SPAWN_LANE_0_Y 250 // Posición Y para carril inferior
 #define SPAWN_LANE_1_Y 300 // Posición Y para carril superior
+
+// ========== CONSTANTES PARA OBSTÁCULOS (NUEVO) ==========
+#define MAX_OBSTACLES 20              // Máximo número de obstáculos simultáneos
+#define OBSTACLE_SPEED 2.0f           // Velocidad de movimiento de obstáculos
+#define MIN_SPAWN_INTERVAL 60         // Frames mínimos entre spawn (1 segundo a 60fps)
+#define OBSTACLE_SPAWN_CHANCE 15      // Porcentaje de probabilidad de spawn por frame
+#define MIN_OBSTACLE_DISTANCE 150     // Distancia mínima entre obstáculos
+#define OBSTACLE_COLLISION_MARGIN 5   // Margen para detección de colisiones
 
 #endif

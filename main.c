@@ -10,6 +10,7 @@ int selectedVehicle = 0;
 bool enMenu = true;
 bool gameInitialized = false;
 bool gamePaused = false; // Nueva variable para controlar la pausa
+bool gameOver = false;
 
 // Variables para animación y efectos
 float offset = 0.0f;
@@ -17,19 +18,19 @@ float pointOffset = 0.0f;
 float landscapeOffset = 0.0f;
 int frameCount = 0;
 
-// Inicializar el juego con vehículos
+// Función para inicializar el juego con vehículos
 void initGame()
 {
     if (!gameInitialized)
     {
         // Inicializar generador de números aleatorios
         srand(time(NULL));
-
+        
         // Limpiar vehículos existentes
         clearVehicles();
+        clearObstacles(); // Asegurarse de limpiar obstáculos previos
 
         // Inicializar SOLO el vehículo seleccionado por el jugador
-        // El vehículo ahora aparece en la parte IZQUIERDA de la pantalla (x = 50)
         switch (selectedVehicle)
         {
         case 1:                         // Delivery
@@ -51,9 +52,40 @@ void initGame()
             break;
         }
 
+        // Inicializar sistema de obstáculos
+        initObstacles();
+        
         gameInitialized = true;
         printf("Juego inicializado con vehiculo tipo %d en posicion izquierda (x=50)\n", selectedVehicle);
     }
+}
+
+void drawGameOverMessage()
+{
+    // Dibujar un rectángulo semi-transparente de fondo
+    glEnable(GL_BLEND);
+    glColor4f(0.3f, 0.0f, 0.0f, 0.7f); // Rojo oscuro semi-transparente
+    drawRect(0, 0, 800, 600);
+
+    // Dibujar el texto de Game Over
+    glColor3f(1.0f, 1.0f, 1.0f); // Blanco para el texto
+
+    // Posicionar el texto en el centro de la pantalla
+    glRasterPos2f(350, 320);
+    char gameOverText[] = "GAME OVER";
+    for (int i = 0; gameOverText[i] != '\0'; i++)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, gameOverText[i]);
+    }
+
+    glRasterPos2f(300, 280);
+    char instructionText[] = "Presiona 'R' para reiniciar";
+    for (int i = 0; instructionText[i] != '\0'; i++)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, instructionText[i]);
+    }
+
+    glDisable(GL_BLEND);
 }
 
 // Función principal de display
@@ -65,51 +97,73 @@ void display()
     // Configurar matriz de proyección
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, 800, 0, 600); // Vista ortogonal 2D consistente
+    gluOrtho2D(0, 800, 0, 600);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     if (enMenu)
     {
-        // Solo dibujar el menú
         drawMenu();
     }
     else
     {
-        // Inicializar el juego si no se ha hecho
         if (!gameInitialized)
         {
             initGame();
         }
 
-        // Dibujar el fondo del juego (carretera, paisaje, etc.)
         drawGame();
 
-        // Solo actualizar y renderizar si no está pausado
-        if (!gamePaused)
+        // Solo actualizar si no está pausado ni en game over
+        if (!gamePaused && !gameOver)
         {
-            // Actualizar posiciones de vehículos (lógica de movimiento)
             updateVehicles();
+            updateObstacles();
+            
+            Vehicle* playerVehicle = getVehicle(0);
+            if (playerVehicle != NULL)
+            {
+                float vehicleWidth, vehicleHeight;
+                
+                switch (playerVehicle->vehicleType)
+                {
+                    case 0: vehicleWidth = 44; vehicleHeight = 32; break;
+                    case 1: vehicleWidth = 70; vehicleHeight = 50; break;
+                    case 2: vehicleWidth = 100; vehicleHeight = 85; break;
+                    case 3: vehicleWidth = 140; vehicleHeight = 70; break;
+                    default: vehicleWidth = 50; vehicleHeight = 40;
+                }
+                
+                if (checkObstacleCollision(playerVehicle->x, playerVehicle->y, 
+                                        vehicleWidth, vehicleHeight))
+                {
+                    printf("¡GAME OVER! Colisión detectada\n");
+                    gameOver = true;
+                    gamePaused = true;
+                }
+            }
         }
 
-        // Renderizar todos los vehículos (siempre mostrar, pausado o no)
         renderVehicles();
-
-        // Mostrar información del vehículo controlado
+        renderObstacles();
         drawGameInfo();
 
-        // Mostrar mensaje de pausa si está pausado
         if (gamePaused)
         {
-            drawPauseMessage();
+            if (gameOver)
+            {
+                drawGameOverMessage();
+            }
+            else
+            {
+                drawPauseMessage();
+            }
         }
     }
 
-    // Intercambiar buffers al final
     glutSwapBuffers();
 }
-
 // Función de redimensionamiento
 void reshape(int w, int h)
 {
@@ -184,9 +238,10 @@ void keyHandler(unsigned char key, int x, int y)
             // Reiniciar posiciones de vehículos
             gamePaused = false; // Asegurar que no esté pausado al reiniciar
             gameInitialized = false;
+            gameOver = false;
             printf("Reiniciando juego...\n");
         }
-        else if (key == 'p' || key == 'P')
+        else if (key == 'p' || key == 'P' && !gameOver)
         {
             // Pausar/reanudar juego
             gamePaused = !gamePaused;
@@ -219,7 +274,7 @@ void keyHandler(unsigned char key, int x, int y)
         else
         {
             // Solo permitir controlar el vehículo si no está pausado
-            if (!gamePaused)
+            if (!gamePaused && !gameOver)
             {
                 // Controlar el vehículo principal (índice 0)
                 controlVehicle(0, key);
