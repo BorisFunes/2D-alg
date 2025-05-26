@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 // Variables globales compartidas
 extern float offset;
@@ -14,6 +15,9 @@ extern int selectedVehicle;
 extern bool enMenu;
 extern bool gamePaused; // Nueva variable para control de pausa
 extern bool gameOver;
+extern int playerLives;
+extern bool isInvulnerable;
+extern clock_t invulnerabilityTimer;
 
 // Estructura del vehículo
 typedef struct
@@ -116,9 +120,11 @@ void renderObstacles();
 void drawRockType1(float x, float y, float size);
 void drawRockType2(float x, float y, float size);
 void drawRockType3(float x, float y, float size);
+void drawBitcoinLife(float x, float y, float size);
 
 // Funciones de colisión
 bool checkObstacleCollision(float vehicleX, float vehicleY, float vehicleWidth, float vehicleHeight);
+
 
 // Funciones de información y configuración
 int getActiveObstacleCount();
@@ -147,5 +153,6 @@ void setObstacleDifficulty(int difficulty);
 #define OBSTACLE_SPAWN_CHANCE 15      // Porcentaje de probabilidad de spawn por frame
 #define MIN_OBSTACLE_DISTANCE 150     // Distancia mínima entre obstáculos
 #define OBSTACLE_COLLISION_MARGIN 5   // Margen para detección de colisiones
+#define MAX_LIVES 3
 
 #endif

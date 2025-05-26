@@ -47,25 +47,24 @@ void spawnObstacle(float x, int lane, int type)
             obstacles[i].type = type;
             obstacles[i].size = 15 + (rand() % 20); // Tamaño variable entre 15-35
             
-            // Determinar Y basado en el carril
+            // Determinar Y basado en el carril (corregido)
             if (lane == 0) // Carril inferior
             {
-                obstacles[i].y = SPAWN_LANE_0_Y - 10; // Un poco más abajo que el centro del carril
+                obstacles[i].y = 250; // Centro del carril inferior
             }
             else // Carril superior
             {
-                obstacles[i].y = SPAWN_LANE_1_Y - 10;
+                obstacles[i].y = 350; // Centro del carril superior
             }
             
             obstacleCount++;
-            printf("Obstáculo creado en X: %.0f, Carril: %d, Tipo: %d\n", 
-                   obstacles[i].x, obstacles[i].lane, obstacles[i].type);
+            printf("Obstáculo creado en X: %.0f, Carril: %d, Tipo: %d, Y: %.0f\n", 
+                   obstacles[i].x, obstacles[i].lane, obstacles[i].type, obstacles[i].y);
             break;
         }
     }
 }
 
-// Actualizar posición y estado de obstáculos
 void updateObstacles()
 {
     // Mover obstáculos existentes
@@ -73,7 +72,6 @@ void updateObstacles()
     {
         if (obstacles[i].active)
         {
-            // Mover hacia la izquierda (efecto de avance del vehículo)
             obstacles[i].x -= OBSTACLE_SPEED;
             
             // Eliminar obstáculos que salieron de pantalla
@@ -89,28 +87,67 @@ void updateObstacles()
     // Generar nuevos obstáculos
     spawnTimer++;
     
-    // Solo spawnnear si ha pasado suficiente tiempo y hay espacio
     if (spawnTimer >= MIN_SPAWN_INTERVAL)
     {
-        // Probabilidad de spawn (ajustable para dificultad)
         if ((rand() % 100) < OBSTACLE_SPAWN_CHANCE)
         {
-            // Elegir carril aleatorio
-            int lane = rand() % 2; // 0 o 1
+            // Elegir carril aleatorio (0 o 1)
+            int lane = rand() % 2;
             
-            // Elegir tipo de piedra aleatorio
-            int type = rand() % 3; // 0, 1 o 2 (diferentes tipos de piedra)
+            // Elegir tipo de obstáculo aleatorio (0, 1 o 2)
+            int type = rand() % 3;
             
-            // Spawnnear en el lado derecho de la pantalla
+            // Spawnear en el lado derecho de la pantalla
             spawnObstacle(850, lane, type);
             
-            spawnTimer = 0; // Resetear timer
+            spawnTimer = 0;
         }
         else
         {
-            spawnTimer = 0; // Resetear timer aunque no se genere obstáculo
+            spawnTimer = 0;
         }
     }
+}
+
+void drawBitcoinLife(float x, float y, float size) {
+    // Círculo exterior (oro Bitcoin)
+    glColor3f(0.96f, 0.65f, 0.07f);
+    drawCircle(x, y, size, 32);
+    
+    // Letra "B" estilo Bitcoin
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glLineWidth(2.5f);
+    
+    // Primera barra vertical (izquierda)
+    glBegin(GL_LINES);
+    glVertex2f(x - size/3, y - size/2);
+    glVertex2f(x - size/3, y + size/2);
+    glEnd();
+    
+    // Segunda barra vertical (derecha)
+    glBegin(GL_LINES);
+    glVertex2f(x + size/6, y - size/2);
+    glVertex2f(x + size/6, y + size/2);
+    glEnd();
+    
+    // Curva superior
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(x - size/3, y - size/2);
+    glVertex2f(x - size/6, y - size/2);
+    glVertex2f(x + size/6, y - size/4);
+    glVertex2f(x - size/6, y);
+    glVertex2f(x + size/6, y + size/4);
+    glVertex2f(x - size/6, y + size/2);
+    glVertex2f(x - size/3, y + size/2);
+    glEnd();
+    
+    // Curva central
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(x - size/6, y);
+    glVertex2f(x + size/6, y - size/4);
+    glEnd();
+    
+    glLineWidth(1.0f);
 }
 
 // Dibujar una piedra tipo 1 (redonda)

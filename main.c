@@ -11,6 +11,9 @@ bool enMenu = true;
 bool gameInitialized = false;
 bool gamePaused = false; // Nueva variable para controlar la pausa
 bool gameOver = false;
+int playerLives = MAX_LIVES;
+bool isInvulnerable = false;
+clock_t invulnerabilityTimer = 0;
 
 // Variables para animación y efectos
 float offset = 0.0f;
@@ -23,6 +26,8 @@ void initGame()
 {
     if (!gameInitialized)
     {
+        playerLives = MAX_LIVES;
+        isInvulnerable = false;
         // Inicializar generador de números aleatorios
         srand(time(NULL));
         
@@ -87,8 +92,16 @@ void drawGameOverMessage()
 
     glDisable(GL_BLEND);
 }
-
-// Función principal de display
+void drawLives() {
+    float startX = 700;
+    float y = 580;
+    float spacing = 30;
+    
+    for (int i = 0; i < playerLives; i++) {
+        drawBitcoinLife(startX + i * spacing, y, 10);
+    }
+}
+// Función principal de display 
 void display()
 {
     // Limpiar buffer primero
@@ -113,7 +126,11 @@ void display()
             initGame();
         }
 
+        // Dibujar el juego primero
         drawGame();
+
+        // Dibujar vidas (encima del juego pero debajo de los mensajes)
+        drawLives();
 
         // Solo actualizar si no está pausado ni en game over
         if (!gamePaused && !gameOver)
@@ -135,13 +152,32 @@ void display()
                     default: vehicleWidth = 50; vehicleHeight = 40;
                 }
                 
-                if (checkObstacleCollision(playerVehicle->x, playerVehicle->y, 
+                // Verificar colisión solo si no es invulnerable
+                if (!isInvulnerable && checkObstacleCollision(playerVehicle->x, playerVehicle->y, 
                                         vehicleWidth, vehicleHeight))
                 {
-                    printf("¡GAME OVER! Colisión detectada\n");
-                    gameOver = true;
-                    gamePaused = true;
+                    playerLives--;
+                    isInvulnerable = true;
+                    invulnerabilityTimer = clock();
+                    printf("¡Colisión! Vidas restantes: %d\n", playerLives);
+                    
+                    if (playerLives <= 0) {
+                        gameOver = true;
+                        gamePaused = true;
+                        printf("GAME OVER\n");
+                    }
                 }
+            }
+        }
+
+        // Verificar invulnerabilidad
+        if (isInvulnerable) {
+            clock_t currentTime = clock();
+            double elapsed = (double)(currentTime - invulnerabilityTimer) / CLOCKS_PER_SEC;
+            
+            if (elapsed >= 1.0) { // 1 segundo de invulnerabilidad
+                isInvulnerable = false;
+                printf("Fin de invulnerabilidad\n");
             }
         }
 
@@ -161,7 +197,7 @@ void display()
             }
         }
     }
-
+    
     glutSwapBuffers();
 }
 // Función de redimensionamiento
@@ -236,7 +272,9 @@ void keyHandler(unsigned char key, int x, int y)
         else if (key == 'r' || key == 'R')
         {
             // Reiniciar posiciones de vehículos
-            gamePaused = false; // Asegurar que no esté pausado al reiniciar
+            playerLives = MAX_LIVES;
+            isInvulnerable = false;
+            gamePaused = false; 
             gameInitialized = false;
             gameOver = false;
             printf("Reiniciando juego...\n");
