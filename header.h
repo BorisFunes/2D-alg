@@ -171,7 +171,7 @@ void setObstacleDifficulty(int difficulty);
 
 // ========== CONSTANTES PARA OBSTÁCULOS - INCREMENTO MASIVO ==========
 #define MAX_OBSTACLES 50             // Máximo número de obstáculos simultáneos - DUPLICADO
-#define OBSTACLE_SPEED 4.0f          // Velocidad de movimiento de obstáculos - AUMENTADO
+#define OBSTACLE_SPEED 2.0f          // Velocidad de movimiento de obstáculos - AUMENTADO
 #define MIN_SPAWN_INTERVAL 25        // Frames mínimos entre spawn - MUY REDUCIDO (menos de medio segundo)
 #define OBSTACLE_SPAWN_CHANCE 35     // Porcentaje de probabilidad de spawn por frame - MUY AUMENTADO
 #define DUAL_SPAWN_CHANCE 25         // NUEVO: Probabilidad de spawn en ambos carriles simultáneamente

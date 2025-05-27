@@ -77,229 +77,106 @@ void spawnObstacle(float x, int lane, int type)
 
 void updateObstacles()
 {
-    // Incrementar contador de tiempo de juego para dificultad progresiva
-    gameTimeCounter++;
-
-    // Aumentar dificultad cada 1800 frames (30 segundos a 60fps)
-    if (PROGRESSIVE_DIFFICULTY && gameTimeCounter % 1800 == 0 && difficultyLevel < 5)
-    {
-        difficultyLevel++;
-        printf("¡Dificultad aumentada a nivel %d!\n", difficultyLevel);
-    }
-
     // Mover obstáculos existentes
     for (int i = 0; i < MAX_OBSTACLES; i++)
     {
         if (obstacles[i].active)
         {
-            // Velocidad ajustada por dificultad
-            float currentSpeed = OBSTACLE_SPEED + (difficultyLevel * 0.5f);
-            obstacles[i].x -= currentSpeed;
-
+            // Mover hacia la izquierda (efecto de avance del vehículo)
+            obstacles[i].x -= OBSTACLE_SPEED;
+            
             // Eliminar obstáculos que salieron de pantalla
             if (obstacles[i].x < -50)
             {
                 obstacles[i].active = false;
                 obstacleCount--;
+                printf("Obstáculo eliminado (fuera de pantalla)\n");
             }
         }
     }
-
-    // Sistema de spawn mejorado con múltiples modos
+    
+    // Generar nuevos obstáculos
     spawnTimer++;
-
-    // Calcular intervalo dinámico basado en dificultad
-    int dynamicInterval = MIN_SPAWN_INTERVAL - (difficultyLevel * 3);
-    if (dynamicInterval < 10)
-        dynamicInterval = 10; // Mínimo absoluto
-
-    // Calcular probabilidad dinámica
-    int dynamicChance = OBSTACLE_SPAWN_CHANCE + (difficultyLevel * 5);
-    if (dynamicChance > 60)
-        dynamicChance = 60; // Máximo 60%
-
-    if (spawnTimer >= dynamicInterval)
+    
+    // Solo spawnnear si ha pasado suficiente tiempo y hay espacio
+    if (spawnTimer >= MIN_SPAWN_INTERVAL)
     {
-        int spawnRoll = rand() % 100;
-
-        // MODO 1: Ráfaga de obstáculos (más común a mayor dificultad)
-        if (spawnRoll < (BURST_SPAWN_CHANCE + difficultyLevel * 2) && !inBurstMode)
+        // Probabilidad de spawn (ajustable para dificultad)
+        if ((rand() % 100) < OBSTACLE_SPAWN_CHANCE)
         {
-            printf("¡INICIANDO RÁFAGA DE OBSTÁCULOS!\n");
-            inBurstMode = true;
-            burstCount = 2 + (rand() % (MAX_BURST_OBSTACLES - 1)); // 2-4 obstáculos
-            burstTimer = 0;
-            spawnTimer = 0;
-        }
-        // MODO 2: Spawn simultáneo en ambos carriles
-        else if (spawnRoll < (DUAL_SPAWN_CHANCE + difficultyLevel * 3))
-        {
-            printf("¡SPAWN DUAL EN AMBOS CARRILES!\n");
-
-            // Spawn en carril inferior
-            int type1 = rand() % 3;
-            spawnObstacle(850, 0, type1);
-
-            // Spawn en carril superior (con pequeño offset)
-            int type2 = rand() % 3;
-            spawnObstacle(870 + (rand() % 40), 1, type2);
-
-            spawnTimer = 0;
-        }
-        // MODO 3: Triple spawn en un solo carril
-        else if (spawnRoll < (TRIPLE_SPAWN_CHANCE + difficultyLevel * 2))
-        {
-            printf("¡TRIPLE SPAWN EN UN CARRIL!\n");
-
-            int lane = rand() % 2;
-
-            // Crear 3 obstáculos en el mismo carril con diferentes posiciones X
-            for (int j = 0; j < 3; j++)
-            {
-                int type = rand() % 3;
-                float xPos = 850 + (j * (MIN_OBSTACLE_DISTANCE + 20));
-                spawnObstacle(xPos, lane, type);
-            }
-
-            spawnTimer = 0;
-        }
-        // MODO 4: Spawn normal (más frecuente)
-        else if (spawnRoll < dynamicChance)
-        {
-            int lane = rand() % 2;
-            int type = rand() % 3;
+            // Elegir carril aleatorio
+            int lane = rand() % 2; // 0 o 1
+            
+            // Elegir tipo de piedra aleatorio
+            int type = rand() % 3; // 0, 1 o 2 (diferentes tipos de piedra)
+            
+            // Spawnnear en el lado derecho de la pantalla
             spawnObstacle(850, lane, type);
-            spawnTimer = 0;
+            
+            spawnTimer = 0; // Resetear timer
         }
         else
         {
-            spawnTimer = 0;
+            spawnTimer = 0; // Resetear timer aunque no se genere obstáculo
         }
-    }
-
-    // Manejar modo ráfaga
-    if (inBurstMode)
-    {
-        burstTimer++;
-
-        // Spawn cada 8 frames durante la ráfaga
-        if (burstTimer >= 8 && burstCount > 0)
-        {
-            int lane = rand() % 2;
-            int type = rand() % 3;
-
-            // Posiciones variadas para la ráfaga
-            float xPos = 850 + (rand() % 100);
-            spawnObstacle(xPos, lane, type);
-
-            burstCount--;
-            burstTimer = 0;
-
-            printf("Obstáculo de ráfaga spawneado. Restantes: %d\n", burstCount);
-        }
-
-        // Terminar ráfaga
-        if (burstCount <= 0)
-        {
-            inBurstMode = false;
-            burstTimer = 0;
-            printf("¡RÁFAGA TERMINADA!\n");
-        }
-    }
-
-    // Sistema adicional: Spawn de obstáculos extra cada cierto tiempo
-    static int extraSpawnTimer = 0;
-    extraSpawnTimer++;
-
-    // Cada 120 frames (2 segundos), posibilidad de spawn extra
-    if (extraSpawnTimer >= 120)
-    {
-        if ((rand() % 100) < (20 + difficultyLevel * 5)) // 20-45% de probabilidad
-        {
-            printf("¡SPAWN EXTRA ACTIVADO!\n");
-
-            // Determinar tipo de spawn extra
-            int extraType = rand() % 3;
-
-            switch (extraType)
-            {
-            case 0: // Obstáculos alternados
-                spawnObstacle(850, 0, rand() % 3);
-                spawnObstacle(920, 1, rand() % 3);
-                break;
-
-            case 1: // Barrera completa (obstáculos en ambos carriles muy juntos)
-                spawnObstacle(850, 0, rand() % 3);
-                spawnObstacle(855, 1, rand() % 3);
-                printf("¡BARRERA COMPLETA CREADA!\n");
-                break;
-
-            case 2: // Cadena de obstáculos
-                for (int k = 0; k < 2 + difficultyLevel; k++)
-                {
-                    int chainLane = rand() % 2;
-                    spawnObstacle(850 + (k * 60), chainLane, rand() % 3);
-                }
-                printf("¡CADENA DE OBSTÁCULOS CREADA!\n");
-                break;
-            }
-        }
-        extraSpawnTimer = 0;
-    }
-
-    // Debug info cada 300 frames
-    static int debugTimer = 0;
-    debugTimer++;
-    if (debugTimer >= 300)
-    {
-        printf("=== ESTADO OBSTÁCULOS ===\n");
-        printf("Activos: %d/%d | Dificultad: %d | Ráfaga: %s\n",
-               obstacleCount, MAX_OBSTACLES, difficultyLevel,
-               inBurstMode ? "SÍ" : "NO");
-        debugTimer = 0;
     }
 }
+
 void drawBitcoinLife(float x, float y, float size)
 {
     // Círculo exterior (oro Bitcoin)
     glColor3f(0.96f, 0.65f, 0.07f);
-    drawCircle(x, y, size, 32);
+    drawCircle(x, y, size, 64); 
 
-    // Letra "B" estilo Bitcoin
+    // B negra
     glColor3f(0.0f, 0.0f, 0.0f);
     glLineWidth(2.5f);
 
-    // Primera barra vertical (izquierda)
+    // Hacemos la B un poco más grande
+    float w = size * 0.5f;  // Antes 0.4f
+    float h = size * 0.75f; // Antes 0.6f
+
+    // Parte izquierda del tallo
     glBegin(GL_LINES);
-    glVertex2f(x - size / 3, y - size / 2);
-    glVertex2f(x - size / 3, y + size / 2);
+    glVertex2f(x - w / 2, y - h / 2);
+    glVertex2f(x - w / 2, y + h / 2);
     glEnd();
 
-    // Segunda barra vertical (derecha)
+    // Parte superior del bucle superior
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(x - w / 2, y + h / 2);
+    glVertex2f(x + w / 4, y + h / 2);
+    glVertex2f(x + w / 2, y + h / 4);
+    glVertex2f(x + w / 4, y);
+    glVertex2f(x - w / 2, y);
+    glEnd();
+
+    // Parte inferior del bucle inferior
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(x - w / 2, y);
+    glVertex2f(x + w / 4, y);
+    glVertex2f(x + w / 2, y - h / 4);
+    glVertex2f(x + w / 4, y - h / 2);
+    glVertex2f(x - w / 2, y - h / 2);
+    glEnd();
+
+    // Líneas verticales que atraviesan la "B"
+    glLineWidth(1.5f);
+    float spacing = size * 0.1f; 
+
     glBegin(GL_LINES);
-    glVertex2f(x + size / 6, y - size / 2);
-    glVertex2f(x + size / 6, y + size / 2);
-    glEnd();
+    // Línea izquierda
+    glVertex2f(x - spacing, y - size / 1.2f);
+    glVertex2f(x - spacing, y + size / 1.2f);
 
-    // Curva superior
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(x - size / 3, y - size / 2);
-    glVertex2f(x - size / 6, y - size / 2);
-    glVertex2f(x + size / 6, y - size / 4);
-    glVertex2f(x - size / 6, y);
-    glVertex2f(x + size / 6, y + size / 4);
-    glVertex2f(x - size / 6, y + size / 2);
-    glVertex2f(x - size / 3, y + size / 2);
-    glEnd();
-
-    // Curva central
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(x - size / 6, y);
-    glVertex2f(x + size / 6, y - size / 4);
+    // Línea derecha
+    glVertex2f(x + spacing, y - size / 1.2f);
+    glVertex2f(x + spacing, y + size / 1.2f);
     glEnd();
 
     glLineWidth(1.0f);
 }
+
 
 // Función para dibujar burbuja de invulnerabilidad
 void drawInvulnerabilityBubble(float x, float y, float width, float height)
@@ -346,92 +223,96 @@ void drawInvulnerabilityBubble(float x, float y, float width, float height)
     glDisable(GL_BLEND);
 }
 
-// Dibujar una piedra tipo 1 (redonda)
 void drawRockType1(float x, float y, float size)
 {
     glPointSize(4.0f);
     glBegin(GL_POINTS);
 
-    // Color base gris
-    glColor3f(0.5f, 0.4f, 0.3f);
+    int radiusX = (int)(size * 0.6f); 
+    int radiusY = (int)(size * 0.4f); 
 
-    // Forma circular aproximada usando puntos
-    int radius = (int)(size / 2);
-    for (int i = -radius; i <= radius; i += 2)
+    glColor3f(0.5f, 0.5f, 0.5f);
+    for (int i = -radiusX; i <= radiusX; i += 2)
     {
-        for (int j = -radius; j <= radius; j += 2)
+        for (int j = -radiusY; j <= radiusY; j += 2)
         {
-            // Crear forma circular
-            if ((i * i + j * j) <= (radius * radius))
+            float distortion = sin(i * 0.2f) * 3 + cos(j * 0.3f) * 2;
+
+            if ((i * i) / (float)(radiusX * radiusX) + 
+                (j * j) / (float)(radiusY * radiusY) <= 1.0 + distortion * 0.01f)
             {
                 glVertex2f(x + i, y + j);
             }
         }
     }
 
-    // Puntos más oscuros para sombras
-    glColor3f(0.3f, 0.2f, 0.1f);
-    for (int i = -radius / 2; i <= radius / 2; i += 3)
+    // Sombra inferior (gris oscuro)
+    glColor3f(0.25f, 0.25f, 0.25f);
+    for (int i = -radiusX + 2; i <= radiusX - 2; i += 3)
     {
-        for (int j = -radius / 2; j <= radius / 2; j += 3)
+        for (int j = -radiusY / 2; j <= radiusY / 3; j += 3)
         {
-            if ((i * i + j * j) <= ((radius / 2) * (radius / 2)))
-            {
-                glVertex2f(x + i + 2, y + j - 2); // Offset para sombra
-            }
+            glVertex2f(x + i + 1, y + j - 2);
         }
     }
 
-    // Puntos claros para brillo
-    glColor3f(0.7f, 0.6f, 0.5f);
-    for (int i = -radius / 3; i <= radius / 3; i += 4)
+    // Brillo superior (gris claro)
+    glColor3f(0.75f, 0.75f, 0.75f);
+    for (int i = -radiusX / 3; i <= radiusX / 4; i += 4)
     {
-        for (int j = -radius / 3; j <= radius / 3; j += 4)
+        for (int j = radiusY / 4; j <= radiusY / 1.5; j += 4)
         {
-            glVertex2f(x + i - 1, y + j + 1); // Offset para brillo
+            glVertex2f(x + i - 1, y + j + 1);
         }
     }
 
     glEnd();
 }
-
 // Dibujar una piedra tipo 2 (angular)
 void drawRockType2(float x, float y, float size)
 {
     glPointSize(3.5f);
     glBegin(GL_POINTS);
 
-    // Color base café
-    glColor3f(0.4f, 0.3f, 0.2f);
-
-    // Forma angular usando puntos
     int halfSize = (int)(size / 2);
 
-    // Crear forma angular irregular
+    // Base gris oscuro
+    glColor3f(0.15f, 0.15f, 0.15f);
     for (int i = -halfSize; i <= halfSize; i += 2)
     {
         for (int j = -halfSize; j <= halfSize; j += 2)
         {
-            // Forma más angular que circular
-            if (abs(i) + abs(j) <= halfSize + 5)
+            // Forma tipo diamante (angular)
+            if (abs(i) + abs(j) <= halfSize + 4)
             {
-                // Agregar irregularidad
-                int noise = (i + j + (int)x + (int)y) % 3 - 1;
-                glVertex2f(x + i + noise, y + j + noise);
+                int offset = ((i * j + (int)x + (int)y) % 3) - 1;
+                glVertex2f(x + i + offset, y + j + offset);
             }
         }
     }
 
-    // Detalles de grietas
-    glColor3f(0.1f, 0.1f, 0.05f);
-    for (int i = -halfSize / 2; i <= halfSize / 2; i += 5)
+    // Zonas de sombra más intensa (parte inferior)
+    glColor3f(0.05f, 0.05f, 0.05f);
+    for (int i = -halfSize + 2; i <= halfSize - 2; i += 3)
     {
-        glVertex2f(x + i, y);
-        glVertex2f(x, y + i);
+        for (int j = 0; j <= halfSize; j += 3)
+        {
+            if (abs(i) + abs(j) <= halfSize)
+                glVertex2f(x + i, y + j);
+        }
+    }
+
+    // Detalles de grietas o bordes entre bloques
+    glColor3f(0.25f, 0.25f, 0.25f);
+    for (int i = -halfSize / 2; i <= halfSize / 2; i += 4)
+    {
+        glVertex2f(x + i, y + i / 2);
+        glVertex2f(x - i, y + i / 3);
     }
 
     glEnd();
 }
+
 
 // Dibujar una piedra tipo 3 (alargada)
 void drawRockType3(float x, float y, float size)

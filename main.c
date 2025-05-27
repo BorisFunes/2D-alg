@@ -99,11 +99,11 @@ void drawLives()
 {
     float startX = 700;
     float y = 580;
-    float spacing = 30;
+    float spacing = 40;
 
     for (int i = 0; i < playerLives; i++)
     {
-        drawBitcoinLife(startX + i * spacing, y, 10);
+        drawBitcoinLife(startX + i * spacing, y, 20);
     }
 }
 
