@@ -10,6 +10,7 @@
 #define ROAD_WIDTH 800
 #define LANE_HEIGHT 100 // Altura de cada carril
 #define VEHICLE_SPEED 2.0f
+#define LATERAL_SPEED 4.0f // NUEVA: Velocidad lateral incrementada (doble que la normal)
 #define LANE_CHANGE_SPEED 1.5f
 
 // Array de vehículos (máximo 10 vehículos)
@@ -102,12 +103,12 @@ bool checkCollision(int vehicleIndex, float newX, float newY)
     return false; // No hay colisión
 }
 
-// Función para mover vehículo hacia la izquierda
+// Función para mover vehículo hacia la izquierda - VELOCIDAD INCREMENTADA
 void moveVehicleLeft(int index)
 {
     if (index >= 0 && index < vehicleCount)
     {
-        float newX = vehicles[index].x - vehicles[index].speed;
+        float newX = vehicles[index].x - LATERAL_SPEED; // Usar velocidad lateral incrementada
 
         // Mantener el vehículo dentro de los límites de la pantalla
         if (newX >= 0 && !checkCollision(index, newX, vehicles[index].y))
@@ -117,12 +118,12 @@ void moveVehicleLeft(int index)
     }
 }
 
-// Función para mover vehículo hacia la derecha
+// Función para mover vehículo hacia la derecha - VELOCIDAD INCREMENTADA
 void moveVehicleRight(int index)
 {
     if (index >= 0 && index < vehicleCount)
     {
-        float newX = vehicles[index].x + vehicles[index].speed;
+        float newX = vehicles[index].x + LATERAL_SPEED; // Usar velocidad lateral incrementada
 
         // Mantener el vehículo dentro de los límites de la pantalla
         // Ajustar según el ancho del vehículo
@@ -317,12 +318,12 @@ void controlVehicle(int index, unsigned char key)
         break;
     case 'a':
     case 'A':
-        // Mover hacia la izquierda
+        // Mover hacia la izquierda - AHORA CON VELOCIDAD INCREMENTADA
         moveVehicleLeft(index);
         break;
     case 'd':
     case 'D':
-        // Mover hacia la derecha
+        // Mover hacia la derecha - AHORA CON VELOCIDAD INCREMENTADA
         moveVehicleRight(index);
         break;
     }

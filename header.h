@@ -6,6 +6,11 @@
 #include <stdlib.h>
 #include <time.h>
 
+// Definiciones matemáticas
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 // Variables globales compartidas
 extern float offset;
 extern float pointOffset;
@@ -28,16 +33,19 @@ typedef struct
     bool isChangingLane; // Si está cambiando de carril
     int currentLane;     // Carril actual (0=inferior, 1=superior)
     float speed;         // Velocidad individual del vehículo
+    bool isJumping;      // NUEVO: Para verificar si está saltando
+    float jumpHeight;    // NUEVO: Altura actual del salto
+    float jumpSpeed;     // NUEVO: Velocidad del salto
 } Vehicle;
 
-// ========== ESTRUCTURA DE OBSTÁCULOS (NUEVO) ==========
+// ========== ESTRUCTURA DE OBSTÁCULOS ==========
 typedef struct
 {
-    float x, y;      // Posición del obstáculo
-    int size;        // Tamaño del obstáculo
-    int type;        // Tipo de piedra (0, 1, 2)
-    int lane;        // Carril donde está (0=inferior, 1=superior)
-    bool active;     // Si el obstáculo está activo
+    float x, y;  // Posición del obstáculo
+    int size;    // Tamaño del obstáculo
+    int type;    // Tipo de piedra (0, 1, 2)
+    int lane;    // Carril donde está (0=inferior, 1=superior)
+    bool active; // Si el obstáculo está activo
 } Obstacle;
 
 // Funciones de menú y juego
@@ -56,6 +64,14 @@ void drawSign();
 // Funciones de paisaje
 void drawForest();
 void drawMountain();
+
+// NUEVAS FUNCIONES AUXILIARES PARA PRIMITIVAS OPTIMIZADAS
+void drawTriangleStrip(float *vertices, int count);
+void drawQuad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
+void drawFilledCircle(float cx, float cy, float radius, int segments);
+void drawFilledEllipse(float cx, float cy, float radiusX, float radiusY, int segments);
+void drawThickLine(int x0, int y0, int x1, int y1, int thickness);
+void drawFilledPolygon(float *vertices, int vertexCount);
 
 // Funciones de vehículos (dibujo)
 void drawBus(int x, int y);
@@ -106,7 +122,7 @@ float getLaneCenterY(int lane);
 Vehicle *getVehicle(int index);
 int getVehicleCount();
 
-// ========== FUNCIONES DE OBSTÁCULOS (obstacles.c) - NUEVO ==========
+// ========== FUNCIONES DE OBSTÁCULOS (obstacles.c) ==========
 // Funciones de inicialización
 void initObstacles();
 void clearObstacles();
@@ -124,11 +140,11 @@ void drawBitcoinLife(float x, float y, float size);
 
 // Funciones de colisión
 bool checkObstacleCollision(float vehicleX, float vehicleY, float vehicleWidth, float vehicleHeight);
-
+void renderInvulnerabilityBubble(float vehicleX, float vehicleY, float vehicleWidth, float vehicleHeight);
 
 // Funciones de información y configuración
 int getActiveObstacleCount();
-Obstacle* getObstacle(int index);
+Obstacle *getObstacle(int index);
 void setObstacleDifficulty(int difficulty);
 
 // Constantes para el sistema de movimiento
@@ -140,19 +156,43 @@ void setObstacleDifficulty(int difficulty);
 #define VEHICLE_SPEED 2.0f
 #define LANE_CHANGE_SPEED 1.5f
 
-// Nuevas constantes para spawn
-#define SPAWN_LEFT_X 50    // Posición X para spawn en la izquierda
-#define SPAWN_RIGHT_X 700  // Posición X para spawn en la derecha (si se necesita)
-#define SPAWN_LANE_0_Y 250 // Posición Y para carril inferior
-#define SPAWN_LANE_1_Y 300 // Posición Y para carril superior
+// Constantes para spawn de vehículos
+#define SPAWN_LEFT_X 50   // Posición X para spawn en la izquierda
+#define SPAWN_RIGHT_X 700 // Posición X para spawn en la derecha (si se necesita)
 
-// ========== CONSTANTES PARA OBSTÁCULOS (NUEVO) ==========
-#define MAX_OBSTACLES 20              // Máximo número de obstáculos simultáneos
-#define OBSTACLE_SPEED 2.0f           // Velocidad de movimiento de obstáculos
-#define MIN_SPAWN_INTERVAL 60         // Frames mínimos entre spawn (1 segundo a 60fps)
-#define OBSTACLE_SPAWN_CHANCE 15      // Porcentaje de probabilidad de spawn por frame
-#define MIN_OBSTACLE_DISTANCE 150     // Distancia mínima entre obstáculos
-#define OBSTACLE_COLLISION_MARGIN 5   // Margen para detección de colisiones
+// ========== CONSTANTES CORREGIDAS PARA CARRILES ==========
+// Estas coordenadas deben coincidir con las del juego
+#define LANE_0_CENTER_Y 250 // Centro del carril inferior
+#define LANE_1_CENTER_Y 350 // Centro del carril superior
+#define LANE_BOUNDARY_Y 300 // Límite entre carriles (Y < 300 = carril 0, Y >= 300 = carril 1)
+
+// ========== CONSTANTES PARA OBSTÁCULOS - INCREMENTO MASIVO ==========
+#define MAX_OBSTACLES 50             // Máximo número de obstáculos simultáneos - DUPLICADO
+#define OBSTACLE_SPEED 4.0f          // Velocidad de movimiento de obstáculos - AUMENTADO
+#define MIN_SPAWN_INTERVAL 25        // Frames mínimos entre spawn - MUY REDUCIDO (menos de medio segundo)
+#define OBSTACLE_SPAWN_CHANCE 35     // Porcentaje de probabilidad de spawn por frame - MUY AUMENTADO
+#define DUAL_SPAWN_CHANCE 25         // NUEVO: Probabilidad de spawn en ambos carriles simultáneamente
+#define TRIPLE_SPAWN_CHANCE 15       // NUEVO: Probabilidad de spawn múltiple en un carril
+#define MIN_OBSTACLE_DISTANCE 80     // Distancia mínima entre obstáculos - MUY REDUCIDO
+#define OBSTACLE_COLLISION_MARGIN 10 // Margen para detección de colisiones
 #define MAX_LIVES 3
+#define INVULNERABILITY_TIME 2.0f // Tiempo de invulnerabilidad en segundos
+
+// NUEVAS CONSTANTES PARA SALTO
+#define JUMP_HEIGHT 50.0f // Altura máxima del salto
+#define JUMP_SPEED 8.0f   // Velocidad inicial del salto
+#define GRAVITY 0.5f      // Gravedad que afecta el salto
+
+// NUEVAS CONSTANTES PARA SPAWN AVANZADO
+#define BURST_SPAWN_CHANCE 10    // NUEVO: Probabilidad de ráfaga de obstáculos
+#define MAX_BURST_OBSTACLES 4    // NUEVO: Máximo obstáculos en una ráfaga
+#define PROGRESSIVE_DIFFICULTY 1 // NUEVO: Habilitar dificultad progresiva
+
+// CONSTANTES PARA OPTIMIZACIÓN DE PRIMITIVAS
+#define CIRCLE_SEGMENTS 16      // Segmentos para círculos (balance calidad/rendimiento)
+#define TREE_DETAIL_LEVEL 8     // Nivel de detalle para árboles
+#define MOUNTAIN_DETAIL_LEVEL 4 // Nivel de detalle para montañas
+#define FOREST_DENSITY 80       // Espaciado entre elementos del bosque
+#define FLOWER_SPACING 120      // Espaciado entre flores
 
 #endif

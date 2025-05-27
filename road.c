@@ -2,222 +2,311 @@
 #include <math.h>
 #include "header.h"
 
+// ========== DECLARACIONES DE FUNCIONES ==========
+void drawLineBresenham(int x0, int y0, int x1, int y1);
+void drawLineDDA(int x0, int y0, int x1, int y1);
+void drawThickLine(int x0, int y0, int x1, int y1, int thickness);
+void drawLetterL(int x, int y);
+void drawLetterO(int x, int y);
+void drawLetterS(int x, int y);
+void drawLetterC(int x, int y);
+void drawLetterH(int x, int y);
+void drawLetterR(int x, int y);
+void drawRoadBorders();
+void drawRoadTexture();
+
+// ========== ALGORITMOS DE LÍNEA RECTA ==========
+
+// Algoritmo de Bresenham para líneas rectas
+void drawLineBresenham(int x0, int y0, int x1, int y1)
+{
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = x0 < x1 ? 1 : -1;
+    int sy = y0 < y1 ? 1 : -1;
+    int err = dx - dy;
+    int x = x0, y = y0;
+
+    glBegin(GL_POINTS);
+    while (1)
+    {
+        glVertex2i(x, y);
+
+        if (x == x1 && y == y1)
+            break;
+
+        int e2 = 2 * err;
+        if (e2 > -dy)
+        {
+            err -= dy;
+            x += sx;
+        }
+        if (e2 < dx)
+        {
+            err += dx;
+            y += sy;
+        }
+    }
+    glEnd();
+}
+
+// Algoritmo DDA (Digital Differential Analyzer) para líneas rectas
+void drawLineDDA(int x0, int y0, int x1, int y1)
+{
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+    int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+
+    float xIncrement = (float)dx / steps;
+    float yIncrement = (float)dy / steps;
+
+    float x = x0;
+    float y = y0;
+
+    glBegin(GL_POINTS);
+    for (int i = 0; i <= steps; i++)
+    {
+        glVertex2i((int)(x + 0.5), (int)(y + 0.5));
+        x += xIncrement;
+        y += yIncrement;
+    }
+    glEnd();
+}
+
+// Función auxiliar para dibujar líneas gruesas usando algoritmo de línea
+void drawThickLine(int x0, int y0, int x1, int y1, int thickness)
+{
+    // Dibujar múltiples líneas paralelas para crear grosor
+    for (int i = -thickness / 2; i <= thickness / 2; i++)
+    {
+        if (abs(x1 - x0) > abs(y1 - y0))
+        {
+            // Línea más horizontal - desplazar en Y
+            drawLineBresenham(x0, y0 + i, x1, y1 + i);
+        }
+        else
+        {
+            // Línea más vertical - desplazar en X
+            drawLineBresenham(x0 + i, y0, x1 + i, y1);
+        }
+    }
+}
+
+// ========== FUNCIONES DE CARRETERA REFACTORIZADAS ==========
+
 void drawLaneLines(float y)
 {
+    glColor3f(1.0, 1.0, 1.0); // Color blanco
+    glPointSize(2.0f);
+
+    // Usar algoritmo de línea para dibujar líneas discontinuas
     for (float x = 0; x < 800; x += 40)
     {
-        glBegin(GL_LINES);
-        glColor3f(1.0, 1.0, 1.0); // Color blanco
-        glVertex2f(x + offset, y);
-        glVertex2f(x + offset + 20, y); // Línea horizontal de 20px
-        glEnd();
+        int startX = (int)(x + offset);
+        int endX = (int)(x + offset + 20);
+        int lineY = (int)y;
+
+        // Dibujar línea horizontal usando Bresenham
+        drawLineBresenham(startX, lineY, endX, lineY);
+
+        // Agregar grosor dibujando líneas adicionales arriba y abajo
+        drawLineBresenham(startX, lineY + 1, endX, lineY + 1);
+        drawLineBresenham(startX, lineY - 1, endX, lineY - 1);
+    }
+}
+
+void drawRoadBorders()
+{
+    glColor3f(1.0f, 1.0f, 0.0f); // Amarillo para bordes
+    glPointSize(3.0f);
+
+    // Borde superior de la carretera usando algoritmo de línea
+    int borderY_top = 410;
+    for (int x = 0; x < 800; x += 5)
+    {
+        int currentX = (int)(x + pointOffset);
+        if (currentX >= 0 && currentX < 800)
+        {
+            drawLineBresenham(currentX, borderY_top, currentX + 3, borderY_top);
+        }
+    }
+
+    // Borde inferior de la carretera
+    int borderY_bottom = 190;
+    for (int x = 0; x < 800; x += 5)
+    {
+        int currentX = (int)(x + pointOffset);
+        if (currentX >= 0 && currentX < 800)
+        {
+            drawLineBresenham(currentX, borderY_bottom, currentX + 3, borderY_bottom);
+        }
+    }
+}
+
+void drawRoadTexture()
+{
+    glColor3f(0.5f, 0.5f, 0.5f); // Gris para textura
+    glPointSize(1.5f);
+
+    // Crear textura de carretera usando puntos distribuidos con algoritmo de línea
+    for (int x = 10; x < 800; x += 35)
+    {
+        for (int y = 210; y < 390; y += 25)
+        {
+            // Agregar variación pseudo-aleatoria
+            float offsetX = ((int)(x + y) % 7) - 3;
+            float offsetY = ((int)(x * y) % 5) - 2;
+
+            int pointX = (int)(x + pointOffset + offsetX);
+            int pointY = (int)(y + offsetY);
+
+            // Dibujar pequeñas líneas en lugar de puntos simples para mejor textura
+            if (pointX >= 0 && pointX < 795)
+            {
+                drawLineBresenham(pointX, pointY, pointX + 2, pointY);
+                drawLineBresenham(pointX, pointY, pointX, pointY + 1);
+            }
+        }
     }
 }
 
 void drawRoadPoints()
 {
-    // Configurar tamaño de los puntos
-    glPointSize(3.0f);
+    // Dibujar bordes usando algoritmo de línea
+    drawRoadBorders();
 
-    glBegin(GL_POINTS);
-    glColor3f(0.8f, 0.8f, 0.0f); // Color amarillo para simular reflectores
-
-    // Puntos en el borde superior de la carretera
-    for (float x = 0; x < 800; x += 60)
-    {
-        glVertex2f(x + pointOffset, 410); // Borde superior
-    }
-
-    // Puntos en el borde inferior de la carretera
-    for (float x = 0; x < 800; x += 60)
-    {
-        glVertex2f(x + pointOffset, 190); // Borde inferior
-    }
-
-    // Puntos decorativos en los carriles (simulando grava o textura)
-    glColor3f(0.5f, 0.5f, 0.5f); // Gris claro
-    glPointSize(2.0f);
-
-    for (float x = 10; x < 800; x += 35)
-    {
-        for (float y = 210; y < 390; y += 25)
-        {
-            // Agregar algo de variación aleatoria simulada
-            float offsetX = ((int)(x + y) % 7) - 3; // Pseudo-random -3 a 3
-            float offsetY = ((int)(x * y) % 5) - 2; // Pseudo-random -2 a 2
-            glVertex2f(x + pointOffset + offsetX, y + offsetY);
-        }
-    }
-
-    glEnd();
+    // Dibujar textura de carretera
+    drawRoadTexture();
 }
 
 void drawSign()
 {
     // Cartel "LOS CHORROS" que se mueve de derecha a izquierda
-    int cycleTime = frameCount % 900; // Ciclo más largo para movimiento completo
+    int cycleTime = frameCount % 900;
 
-    if (cycleTime < 600) // El cartel está visible durante más tiempo
+    if (cycleTime < 600)
     {
-        // Posición del cartel (se mueve de derecha a izquierda)
-        float signX = 900 - (cycleTime * 1.5f); // Velocidad de movimiento
+        float signX = 900 - (cycleTime * 1.5f);
 
-        // Solo dibujar si está en pantalla
         if (signX > -200 && signX < 900)
         {
-            // Poste del cartel
-            glLineWidth(8.0f);
-            glBegin(GL_LINES);
+            // Poste del cartel usando líneas gruesas
             glColor3f(0.4f, 0.2f, 0.1f); // Café
-            glVertex2f(signX + 50, 480);
-            glVertex2f(signX + 50, 530);
-            glEnd();
+            int poleX = (int)(signX + 50);
+            drawThickLine(poleX, 480, poleX, 530, 8);
 
-            // Fondo del cartel (más grande para letras separadas)
-            glBegin(GL_QUADS);
+            // Fondo del cartel - dibujar rectángulo usando líneas
             glColor3f(0.9f, 0.9f, 0.7f); // Beige claro
-            glVertex2f(signX, 520);
-            glVertex2f(signX + 200, 520);
-            glVertex2f(signX + 200, 545);
-            glVertex2f(signX, 545);
-            glEnd();
 
-            // Borde del cartel
-            glLineWidth(3.0f);
-            glBegin(GL_LINE_LOOP);
-            glColor3f(0.3f, 0.2f, 0.1f); // Café oscuro
-            glVertex2f(signX, 520);
-            glVertex2f(signX + 200, 520);
-            glVertex2f(signX + 200, 545);
-            glVertex2f(signX, 545);
-            glEnd();
+            // Dibujar rectángulo línea por línea
+            int rectLeft = (int)signX;
+            int rectRight = (int)(signX + 200);
+            int rectBottom = 520;
+            int rectTop = 545;
 
-            // Texto "LOS CHORROS" usando puntos pequeños con mejor separación
-            glPointSize(2.5f);
-            glBegin(GL_POINTS);
+            // Rellenar rectángulo dibujando líneas horizontales
+            for (int y = rectBottom; y <= rectTop; y++)
+            {
+                drawLineBresenham(rectLeft, y, rectRight, y);
+            }
+
+            // Borde del cartel usando líneas
+            glColor3f(0.3f, 0.2f, 0.1f);                                   // Café oscuro
+            drawThickLine(rectLeft, rectBottom, rectRight, rectBottom, 3); // Línea inferior
+            drawThickLine(rectLeft, rectTop, rectRight, rectTop, 3);       // Línea superior
+            drawThickLine(rectLeft, rectBottom, rectLeft, rectTop, 3);     // Línea izquierda
+            drawThickLine(rectRight, rectBottom, rectRight, rectTop, 3);   // Línea derecha
+
+            // Texto "LOS CHORROS" usando algoritmo de línea para formar las letras
             glColor3f(0.8f, 0.0f, 0.0f); // Rojo
+            glPointSize(2.0f);
 
-            float textX = signX + 15; // Posición inicial del texto
+            int textX = (int)(signX + 15);
+            int textY = 532;
 
-            // L
-            for (int i = 0; i < 12; i++)
-                glVertex2f(textX, 525 + i);
-            for (int i = 0; i < 10; i++)
-                glVertex2f(textX + i, 525);
-            textX += 18; // Espacio entre letras
-
-            // O
-            for (int i = 0; i < 10; i++)
-            {
-                glVertex2f(textX, 526 + i);
-                glVertex2f(textX + 8, 526 + i);
-            }
-            for (int i = 0; i < 8; i++)
-            {
-                glVertex2f(textX + 1 + i, 526);
-                glVertex2f(textX + 1 + i, 535);
-            }
+            // Dibujar cada letra usando líneas
+            drawLetterL(textX, textY);
             textX += 18;
 
-            // S
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 535);
-            for (int i = 0; i < 5; i++)
-                glVertex2f(textX, 531 + i);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 530);
-            for (int i = 0; i < 5; i++)
-                glVertex2f(textX + 7, 526 + i);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 526);
-            textX += 25; // Espacio más grande entre palabras
-
-            // C
-            for (int i = 0; i < 10; i++)
-                glVertex2f(textX, 526 + i);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 526);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 535);
+            drawLetterO(textX, textY);
             textX += 18;
 
-            // H
-            for (int i = 0; i < 12; i++)
-                glVertex2f(textX, 525 + i);
-            for (int i = 0; i < 12; i++)
-                glVertex2f(textX + 8, 525 + i);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 530);
+            drawLetterS(textX, textY);
+            textX += 25; // Espacio entre palabras
+
+            drawLetterC(textX, textY);
             textX += 18;
 
-            // O
-            for (int i = 0; i < 10; i++)
-            {
-                glVertex2f(textX, 526 + i);
-                glVertex2f(textX + 8, 526 + i);
-            }
-            for (int i = 0; i < 8; i++)
-            {
-                glVertex2f(textX + 1 + i, 526);
-                glVertex2f(textX + 1 + i, 535);
-            }
+            drawLetterH(textX, textY);
             textX += 18;
 
-            // R
-            for (int i = 0; i < 12; i++)
-                glVertex2f(textX, 525 + i);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 535);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 530);
-            for (int i = 0; i < 5; i++)
-                glVertex2f(textX + 8, 531 + i);
-            for (int i = 0; i < 5; i++)
-                glVertex2f(textX + 3 + i, 526 + i);
+            drawLetterO(textX, textY);
             textX += 18;
 
-            // R
-            for (int i = 0; i < 12; i++)
-                glVertex2f(textX, 525 + i);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 535);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 530);
-            for (int i = 0; i < 5; i++)
-                glVertex2f(textX + 7, 531 + i);
-            for (int i = 0; i < 5; i++)
-                glVertex2f(textX + 3 + i, 526 + i);
+            drawLetterR(textX, textY);
             textX += 18;
 
-            // O
-            for (int i = 0; i < 10; i++)
-            {
-                glVertex2f(textX, 526 + i);
-                glVertex2f(textX + 8, 526 + i);
-            }
-            for (int i = 0; i < 8; i++)
-            {
-                glVertex2f(textX + 1 + i, 526);
-                glVertex2f(textX + 1 + i, 535);
-            }
+            drawLetterR(textX, textY);
             textX += 18;
 
-            // S
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 535);
-            for (int i = 0; i < 5; i++)
-                glVertex2f(textX, 531 + i);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 530);
-            for (int i = 0; i < 5; i++)
-                glVertex2f(textX + 7, 526 + i);
-            for (int i = 0; i < 8; i++)
-                glVertex2f(textX + i, 526);
+            drawLetterO(textX, textY);
+            textX += 18;
 
-            glEnd();
+            drawLetterS(textX, textY);
         }
     }
 }
+
+// ========== FUNCIONES PARA DIBUJAR LETRAS USANDO ALGORITMO DE LÍNEA ==========
+
+void drawLetterL(int x, int y)
+{
+    drawThickLine(x, y - 7, x, y + 5, 2);     // Línea vertical
+    drawThickLine(x, y - 7, x + 8, y - 7, 2); // Línea horizontal inferior
+}
+
+void drawLetterO(int x, int y)
+{
+    // Dibujar 'O' usando líneas para formar un rectángulo
+    drawThickLine(x, y - 6, x, y + 4, 2);         // Izquierda
+    drawThickLine(x + 7, y - 6, x + 7, y + 4, 2); // Derecha
+    drawThickLine(x + 1, y + 4, x + 6, y + 4, 2); // Superior
+    drawThickLine(x + 1, y - 6, x + 6, y - 6, 2); // Inferior
+}
+
+void drawLetterS(int x, int y)
+{
+    drawThickLine(x, y + 4, x + 7, y + 4, 2);     // Superior
+    drawThickLine(x, y + 1, x, y + 4, 2);         // Izquierda superior
+    drawThickLine(x, y - 1, x + 7, y - 1, 2);     // Medio
+    drawThickLine(x + 7, y - 4, x + 7, y - 1, 2); // Derecha inferior
+    drawThickLine(x, y - 6, x + 7, y - 6, 2);     // Inferior
+}
+
+void drawLetterC(int x, int y)
+{
+    drawThickLine(x, y - 6, x, y + 4, 2);     // Línea vertical izquierda
+    drawThickLine(x, y + 4, x + 7, y + 4, 2); // Línea superior
+    drawThickLine(x, y - 6, x + 7, y - 6, 2); // Línea inferior
+}
+
+void drawLetterH(int x, int y)
+{
+    drawThickLine(x, y - 7, x, y + 5, 2);         // Línea izquierda
+    drawThickLine(x + 7, y - 7, x + 7, y + 5, 2); // Línea derecha
+    drawThickLine(x, y - 1, x + 7, y - 1, 2);     // Línea horizontal media
+}
+
+void drawLetterR(int x, int y)
+{
+    drawThickLine(x, y - 7, x, y + 5, 2);         // Línea vertical izquierda
+    drawThickLine(x, y + 4, x + 7, y + 4, 2);     // Línea superior
+    drawThickLine(x, y - 1, x + 7, y - 1, 2);     // Línea media
+    drawThickLine(x + 7, y, x + 7, y + 4, 2);     // Derecha superior
+    drawThickLine(x + 3, y - 7, x + 7, y - 3, 2); // Diagonal inferior
+}
+
+// ========== FUNCIÓN PRINCIPAL DE CARRETERA ==========
 
 void drawRoad()
 {
@@ -225,20 +314,20 @@ void drawRoad()
     drawMountain();
     drawForest();
 
-    // Dibuja el fondo de la carretera (ajustado para 2 carriles)
+    // Dibuja el fondo de la carretera usando líneas horizontales
     glColor3f(0.2f, 0.2f, 0.2f); // Gris oscuro
-    glBegin(GL_QUADS);
-    glVertex2f(0, 200);   // Inicio Y ajustado
-    glVertex2f(800, 200); // Ancho completo
-    glVertex2f(800, 400); // Final Y ajustado
-    glVertex2f(0, 400);   // Cierre del rectángulo
-    glEnd();
 
-    // Dibuja los puntos decorativos y reflectores
+    // Rellenar carretera línea por línea usando algoritmo de línea
+    for (int y = 200; y <= 400; y++)
+    {
+        drawLineBresenham(0, y, 800, y);
+    }
+
+    // Dibuja los puntos decorativos y reflectores usando algoritmos de línea
     drawRoadPoints();
 
-    // Dibuja línea central entre los 2 carriles
-    drawLaneLines(300); // Línea central entre carril 1 y 2
+    // Dibuja línea central entre los 2 carriles usando algoritmo de línea
+    drawLaneLines(300);
 
     // Dibuja el cartel
     drawSign();

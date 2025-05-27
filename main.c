@@ -28,9 +28,11 @@ void initGame()
     {
         playerLives = MAX_LIVES;
         isInvulnerable = false;
+        gameOver = false;
+
         // Inicializar generador de números aleatorios
         srand(time(NULL));
-        
+
         // Limpiar vehículos existentes
         clearVehicles();
         clearObstacles(); // Asegurarse de limpiar obstáculos previos
@@ -59,7 +61,7 @@ void initGame()
 
         // Inicializar sistema de obstáculos
         initObstacles();
-        
+
         gameInitialized = true;
         printf("Juego inicializado con vehiculo tipo %d en posicion izquierda (x=50)\n", selectedVehicle);
     }
@@ -92,16 +94,20 @@ void drawGameOverMessage()
 
     glDisable(GL_BLEND);
 }
-void drawLives() {
+
+void drawLives()
+{
     float startX = 700;
     float y = 580;
     float spacing = 30;
-    
-    for (int i = 0; i < playerLives; i++) {
+
+    for (int i = 0; i < playerLives; i++)
+    {
         drawBitcoinLife(startX + i * spacing, y, 10);
     }
 }
-// Función principal de display 
+
+// Función principal de display
 void display()
 {
     // Limpiar buffer primero
@@ -137,53 +143,109 @@ void display()
         {
             updateVehicles();
             updateObstacles();
-            
-            Vehicle* playerVehicle = getVehicle(0);
-            if (playerVehicle != NULL)
+
+            // VERIFICAR COLISIONES SOLO SI NO ESTAMOS EN INVULNERABILIDAD
+            if (!isInvulnerable)
             {
-                float vehicleWidth, vehicleHeight;
-                
-                switch (playerVehicle->vehicleType)
+                Vehicle *playerVehicle = getVehicle(0);
+                if (playerVehicle != NULL)
                 {
-                    case 0: vehicleWidth = 44; vehicleHeight = 32; break;
-                    case 1: vehicleWidth = 70; vehicleHeight = 50; break;
-                    case 2: vehicleWidth = 100; vehicleHeight = 85; break;
-                    case 3: vehicleWidth = 140; vehicleHeight = 70; break;
-                    default: vehicleWidth = 50; vehicleHeight = 40;
-                }
-                
-                // Verificar colisión solo si no es invulnerable
-                if (!isInvulnerable && checkObstacleCollision(playerVehicle->x, playerVehicle->y, 
-                                        vehicleWidth, vehicleHeight))
-                {
-                    playerLives--;
-                    isInvulnerable = true;
-                    invulnerabilityTimer = clock();
-                    printf("¡Colisión! Vidas restantes: %d\n", playerLives);
-                    
-                    if (playerLives <= 0) {
-                        gameOver = true;
-                        gamePaused = true;
-                        printf("GAME OVER\n");
+                    float vehicleWidth, vehicleHeight;
+
+                    switch (playerVehicle->vehicleType)
+                    {
+                    case 0:
+                        vehicleWidth = 44;
+                        vehicleHeight = 32;
+                        break;
+                    case 1:
+                        vehicleWidth = 70;
+                        vehicleHeight = 50;
+                        break;
+                    case 2:
+                        vehicleWidth = 100;
+                        vehicleHeight = 85;
+                        break;
+                    case 3:
+                        vehicleWidth = 140;
+                        vehicleHeight = 70;
+                        break;
+                    default:
+                        vehicleWidth = 50;
+                        vehicleHeight = 40;
+                    }
+
+                    // VERIFICAR COLISIÓN SOLO AQUÍ
+                    if (checkObstacleCollision(playerVehicle->x, playerVehicle->y, vehicleWidth, vehicleHeight))
+                    {
+                        playerLives--;
+                        isInvulnerable = true;
+                        invulnerabilityTimer = clock();
+                        printf("¡Colisión! Vidas restantes: %d\n", playerLives);
+
+                        if (playerLives <= 0)
+                        {
+                            gameOver = true;
+                            gamePaused = true;
+                            printf("GAME OVER\n");
+                        }
                     }
                 }
             }
         }
 
         // Verificar invulnerabilidad
-        if (isInvulnerable) {
+        if (isInvulnerable)
+        {
             clock_t currentTime = clock();
             double elapsed = (double)(currentTime - invulnerabilityTimer) / CLOCKS_PER_SEC;
-            
-            if (elapsed >= 1.0) { // 1 segundo de invulnerabilidad
+
+            if (elapsed >= 2.0)
+            { // 2 segundos de invulnerabilidad
                 isInvulnerable = false;
                 printf("Fin de invulnerabilidad\n");
             }
         }
 
+        // Renderizar elementos visuales
         renderVehicles();
         renderObstacles();
         drawGameInfo();
+
+        // Renderizar burbuja de invulnerabilidad si está activa
+        if (isInvulnerable && !enMenu && gameInitialized)
+        {
+            Vehicle *playerVehicle = getVehicle(0);
+            if (playerVehicle != NULL)
+            {
+                float vehicleWidth, vehicleHeight;
+
+                switch (playerVehicle->vehicleType)
+                {
+                case 0:
+                    vehicleWidth = 44;
+                    vehicleHeight = 32;
+                    break;
+                case 1:
+                    vehicleWidth = 70;
+                    vehicleHeight = 50;
+                    break;
+                case 2:
+                    vehicleWidth = 100;
+                    vehicleHeight = 85;
+                    break;
+                case 3:
+                    vehicleWidth = 140;
+                    vehicleHeight = 70;
+                    break;
+                default:
+                    vehicleWidth = 50;
+                    vehicleHeight = 40;
+                }
+
+                renderInvulnerabilityBubble(playerVehicle->x, playerVehicle->y, vehicleWidth, vehicleHeight);
+            }
+        }
 
         if (gamePaused)
         {
@@ -197,9 +259,10 @@ void display()
             }
         }
     }
-    
+
     glutSwapBuffers();
 }
+
 // Función de redimensionamiento
 void reshape(int w, int h)
 {
@@ -274,7 +337,7 @@ void keyHandler(unsigned char key, int x, int y)
             // Reiniciar posiciones de vehículos
             playerLives = MAX_LIVES;
             isInvulnerable = false;
-            gamePaused = false; 
+            gamePaused = false;
             gameInitialized = false;
             gameOver = false;
             printf("Reiniciando juego...\n");
