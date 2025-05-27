@@ -2,7 +2,7 @@
 #include <math.h>
 #include "header.h"
 
-// funcionn para  círculos
+// dibuja un circulo con lineas
 void drawCircle(float cx, float cy, float r, int segments)
 {
     glBegin(GL_POLYGON);
@@ -16,7 +16,7 @@ void drawCircle(float cx, float cy, float r, int segments)
     glEnd();
 }
 
-// funcion para  rectangulos
+// dibuja rectangulo relleno
 void drawRect(float x1, float y1, float x2, float y2)
 {
     glBegin(GL_QUADS);
@@ -27,7 +27,7 @@ void drawRect(float x1, float y1, float x2, float y2)
     glEnd();
 }
 
-// Función para  contorno de rectángulo
+// borde para dibujado del rectangulo
 void drawRectOutline(float x1, float y1, float x2, float y2)
 {
     drawLineBresenham((int)x1, (int)y1, (int)x2, (int)y1);
@@ -35,7 +35,7 @@ void drawRectOutline(float x1, float y1, float x2, float y2)
     drawLineBresenham((int)x2, (int)y2, (int)x1, (int)y2);
     drawLineBresenham((int)x1, (int)y2, (int)x1, (int)y1);
 }
-// funcion relleno de circulo
+// circulo de relleno con el algoritmo de punto medio
 void drawFilledCircleMidpoint(int cx, int cy, int radius)
 {
     int x = radius;
@@ -45,7 +45,6 @@ void drawFilledCircleMidpoint(int cx, int cy, int radius)
     glBegin(GL_LINES);
     while (x >= y)
     {
-        // Dibuja líneas horizontales para rellenar
         glVertex2i(cx - x, cy + y);
         glVertex2i(cx + x, cy + y);
         glVertex2i(cx - x, cy - y);
@@ -68,19 +67,18 @@ void drawFilledCircleMidpoint(int cx, int cy, int radius)
     }
     glEnd();
 }
-// Función para  rueda completa
+// dibuja un rueda con centro
 void drawWheel(float x, float y, float radius, float innerRadius)
 {
-    // Rueda exterior
+
     glColor3f(0.1f, 0.1f, 0.1f);
     drawFilledCircleMidpoint((int)x, (int)y, (int)radius);
 
-    // Rueda interior
     glColor3f(0.5f, 0.5f, 0.5f);
     drawFilledCircleMidpoint((int)x, (int)y, (int)innerRadius);
 }
 
-// dibujar múltiples ventanas en fila
+// dibuja varias ventanas seguidas
 void drawWindows(float startX, float y, float width, float height, int count, float spacing, float r, float g, float b)
 {
     glColor3f(r, g, b);
@@ -91,7 +89,7 @@ void drawWindows(float startX, float y, float width, float height, int count, fl
     }
 }
 
-// dibujar contornos de múltiples ventanas
+// contorno de ventanas
 void drawWindowsOutline(float startX, float y, float width, float height, int count, float spacing)
 {
     for (int i = 0; i < count; i++)
@@ -101,14 +99,14 @@ void drawWindowsOutline(float startX, float y, float width, float height, int co
     }
 }
 
-// dibujar luces delante y atras
+// luz para los vehiculos, ya sea delantera o trasera
 void drawLight(float x, float y, float width, float height, float r, float g, float b)
 {
     glColor3f(r, g, b);
     drawRect(x, y, x + width, y + height);
 }
 
-//  lIneas horizontales decorativas
+// dibuja lineas horizontales de decoracion
 void drawHorizontalLines(float x, float y, float width, int count, float spacing)
 {
     for (int i = 0; i < count; i++)
@@ -121,14 +119,13 @@ void drawHorizontalLines(float x, float y, float width, int count, float spacing
 ////////////// ****** MOTO PARA DELIVERY ******* ////////
 void drawDelivery(int x, int y)
 {
-    // ruedas
+    // ruedas y cuerpo
     drawWheel(x + 2, y, 8, 5);
     drawWheel(x + 42, y, 8, 5);
     glColor3f(0.3f, 0.3f, 0.3f);
     drawCircle(x + 2, y, 2, 8);
     drawCircle(x + 42, y, 2, 8);
 
-    // Cuerpo
     glColor3f(0.9f, 0.1f, 0.1f);
     glBegin(GL_POLYGON);
     glVertex2f(x, y);
@@ -137,7 +134,7 @@ void drawDelivery(int x, int y)
     glVertex2f(x + 44, y);
     glEnd();
 
-    // Tanque
+    // asiento y manubrio
     glColor3f(0.8f, 0.05f, 0.05f);
     glBegin(GL_POLYGON);
     glVertex2f(x + 17, y + 8);
@@ -146,11 +143,9 @@ void drawDelivery(int x, int y)
     glVertex2f(x + 14, y + 18);
     glEnd();
 
-    // Asiento
     glColor3f(0.1f, 0.1f, 0.1f);
     drawRect(x + 10, y + 8, x + 34, y + 16);
 
-    // Manubrio
     glColor3f(0.0f, 0.0f, 0.0f);
     glLineWidth(3.0f);
     glBegin(GL_LINES);
@@ -160,13 +155,12 @@ void drawDelivery(int x, int y)
     glVertex2f(x + 50, y + 15);
     glEnd();
 
-    // Caja de delivery
+    // caja y pedales
     glColor3f(1.0f, 0.85f, 0.1f);
     drawRect(x - 2, y + 16, x + 16, y + 32);
     glColor3f(0.8f, 0.0f, 0.0f);
     drawRect(x + 1, y + 22, x + 13, y + 26);
 
-    // Pedales
     glColor3f(0.2f, 0.2f, 0.2f);
     drawRect(x + 20, y - 3, x + 24, y - 1);
 
@@ -201,20 +195,17 @@ void drawCar(int x, int y)
     glVertex2f(x + 18, y + 48);
     glEnd();
 
-    // Ventanas
+    // ventanas y ruedas
     drawRect(x + 25, y + 35, x + 55, y + 48);
     glColor3f(0.8f, 0.2f, 0.2f);
     drawRect(x + 38, y + 35, x + 42, y + 48);
 
-    // Ruedas
     drawWheel(x + 20, y + 15, 10, 5);
     drawWheel(x + 60, y + 15, 10, 5);
 
-    // Luces
     drawLight(x + 68, y + 20, 4, 8, 1.0f, 1.0f, 0.8f);
     drawLight(x + 8, y + 20, 4, 8, 1.0f, 0.2f, 0.2f);
 
-    // Contornos
     glColor3f(0.0f, 0.0f, 0.0f);
     glLineWidth(1.5f);
     glBegin(GL_LINE_LOOP);
@@ -225,8 +216,6 @@ void drawCar(int x, int y)
     glEnd();
 
     drawRectOutline(x + 25, y + 35, x + 55, y + 48);
-
-    // Línea del separador
     drawLineBresenham((int)(x + 40), (int)(y + 35), (int)(x + 40), (int)(y + 48));
 
     glLineWidth(1.0f);
@@ -234,6 +223,7 @@ void drawCar(int x, int y)
 ////////////// ****** MICROBUS TIPPO COASTER ******* ////////
 void drawCoaster(int x, int y)
 {
+    // cuerpoPrincipal
     glColor3f(0.95f, 0.95f, 0.95f);
     glBegin(GL_POLYGON);
     glVertex2f(x, y + 20);
@@ -244,11 +234,9 @@ void drawCoaster(int x, int y)
     glVertex2f(x, y + 70);
     glEnd();
 
-    // Franja
     glColor3f(0.2f, 0.4f, 0.8f);
     drawRect(x, y + 35, x + 100, y + 45);
 
-    // Parabrisas delantero
     glColor3f(0.7f, 0.8f, 0.95f);
     glBegin(GL_POLYGON);
     glVertex2f(x + 75, y + 50);
@@ -258,24 +246,21 @@ void drawCoaster(int x, int y)
     glVertex2f(x + 75, y + 80);
     glEnd();
 
-    // Ventanas del medio
+    // ventanas y ruedas
     drawWindows(x + 50, y + 50, 18, 25, 2, -20, 0.7f, 0.8f, 0.95f);
 
-    // Ruedas
     drawWheel(x + 20, y + 20, 12, 6);
     drawWheel(x + 75, y + 20, 12, 6);
 
-    // Luces
+    // Luces y detalles
     drawLight(x + 95, y + 38, 5, 7, 1.0f, 1.0f, 0.3f);
     drawLight(x, y + 38, 3, 7, 1.0f, 0.2f, 0.2f);
     glColor3f(0.3f, 0.3f, 0.3f);
     drawRect(x + 82, y + 55, x + 87, y + 60);
 
-    // techo
     glColor3f(0.4f, 0.4f, 0.4f);
     drawHorizontalLines(x + 10, y + 80, 80, 2, 2);
 
-    // Contornos
     glColor3f(0.0f, 0.0f, 0.0f);
     glLineWidth(2.0f);
 
@@ -289,11 +274,9 @@ void drawCoaster(int x, int y)
     glVertex2f(x, y + 20);
     glEnd();
 
-    // Contornos de ventanas
     glLineWidth(0.5f);
     drawWindowsOutline(x + 50, y + 50, 18, 25, 2, -20);
 
-    // Líneas de franja decorativa
     glBegin(GL_LINES);
     glVertex2f(x, y + 35);
     glVertex2f(x + 100, y + 35);
@@ -306,6 +289,7 @@ void drawCoaster(int x, int y)
 ////////////// ****** BUS  ******* ////////
 void drawBus(int x, int y)
 {
+    // cuerpoBus
     glColor3f(0.9f, 0.9f, 0.9f);
     glBegin(GL_POLYGON);
     glVertex2f(x, y + 15);
@@ -316,11 +300,9 @@ void drawBus(int x, int y)
     glVertex2f(x, y + 55);
     glEnd();
 
-    // Franja inferior naranja
     glColor3f(1.0f, 0.5f, 0.1f);
     drawRect(x, y + 15, x + 140, y + 35);
 
-    // Parabrisas delantero
     glColor3f(0.7f, 0.8f, 0.95f);
     glBegin(GL_POLYGON);
     glVertex2f(x + 120, y + 35);
@@ -330,14 +312,12 @@ void drawBus(int x, int y)
     glVertex2f(x + 120, y + 65);
     glEnd();
 
-    // ventanas
+    // ventanas,ruedas,lucess
     drawWindows(x + 90, y + 45, 20, 18, 4, -25, 0.7f, 0.8f, 0.95f);
 
-    // ruedas
     drawWheel(x + 25, y + 15, 18, 10);
     drawWheel(x + 115, y + 15, 18, 10);
 
-    // faros y luces
     drawLight(x + 135, y + 20, 5, 10, 1.0f, 1.0f, 0.3f);
     drawLight(x, y + 20, 3, 8, 1.0f, 0.2f, 0.2f);
 
@@ -345,11 +325,9 @@ void drawBus(int x, int y)
     glColor3f(0.0f, 0.0f, 0.0f);
     glLineWidth(2.0f);
 
-    // Contornos de ventanas
     glLineWidth(1.5f);
     drawWindowsOutline(x + 90, y + 45, 20, 18, 4, -25);
 
-    // Contorno del parabrisas
     glBegin(GL_LINE_LOOP);
     glVertex2f(x + 120, y + 35);
     glVertex2f(x + 140, y + 35);
