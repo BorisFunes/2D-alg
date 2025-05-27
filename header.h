@@ -11,6 +11,9 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+//funcione de dibujo 
+void drawLineBresenham(int x0, int y0, int x1, int y1);
+
 // Variables globales compartidas
 extern float offset;
 extern float pointOffset;

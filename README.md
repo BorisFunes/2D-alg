@@ -1,8 +1,7 @@
 # 2D-alg
 examen 2 de algoritmos graficos
 
-para compilar gcc main.c road.c vehicles.c forest.c menu.c -o juego2d -lGL -lGLU -lglut -lm
-
+para compilar gcc *.c -o juego2d -lGL -lGLU -lglut -lm
 cabecera 
 #ifndef ROAD_H
 #define ROAD_H
